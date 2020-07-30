@@ -12,9 +12,21 @@
                 <p>Loading a new quote...</p>
             </div>
             
-            <div v-else-if='quote'>
-                <p>Decode the quote!</p>
-                <p>{{ quote }}</p>
+            <div v-else-if='decoded_quote'>
+                <h3>Decode the quote!</h3>
+                <table>
+                    <tr>
+                        <td align='center' v-for='(replacement, original, index) in alphabet'>
+                            {{original}}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align='center' v-for='(replacement, original, index) in alphabet'>
+                            <input type='text' maxlength="1" v-bind:value='replacement' style='width:35px; text-align:center' />
+                        </td>
+                    </tr>
+                </table>
+                <p>{{ decoded_quote }}</p>
                 <p><i>{{ author }}</i></p>
             </div>
         </div>
@@ -25,19 +37,34 @@
             var app = new Vue({
                 el: '#app',
                 data: {
+                    alphabet: {},
                     loading: undefined,
-                    quote: '',
+                    decoded_quote: '',
                     encoded: '',
                     author: '',
                     completed: false // Set to true with the user submits the decoded quote sucessfully
+                },
+                mounted: function() {
+                    let a = 'abcdefghijklmnopqrstuvwxyz';
+                    let tmp = {}
+                    
+                    for (let i = 0; i < a.length; i++) {
+                        tmp[a[i]] = '';
+                    }
+
+                    this.alphabet = tmp;
                 },
                 methods: {
                     getQuote: async function() {
                         this.loading = true;
 
                         let q = await this._requestQuote();
-                        this.quote = q.quote;
+                        this.decoded_quote = q.quote;
                         this.author = q.author;
+
+                        for (let i in this.alphabet) {
+                            this.alphabet[i] = '';
+                        }
                         
                         this.loading = false;
                     },
