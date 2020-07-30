@@ -6,8 +6,17 @@
         </style>
     <body>
         <div id='app' v-cloak>
-            <p>{{ quote }}</p>
-            <p><i>{{ author }}</i></p>
+            <button v-on:click='getQuote'>Get a new quote</button>
+
+            <div v-if='loading'>
+                <p>Loading a new quote...</p>
+            </div>
+            
+            <div v-else-if='quote'>
+                <p>Decode the quote!</p>
+                <p>{{ quote }}</p>
+                <p><i>{{ author }}</i></p>
+            </div>
         </div>
 
         <script type='text/javascript' src="scripts/vue.js"></script> 
@@ -16,17 +25,35 @@
             var app = new Vue({
                 el: '#app',
                 data: {
-                    quote: 'Loading quote...',
-                    author: ''
+                    loading: undefined,
+                    quote: '',
+                    encoded: '',
+                    author: '',
+                    completed: false // Set to true with the user submits the decoded quote sucessfully
                 },
-                async mounted() {
-                    let response = await fetch(quotes_url);
-                    if(response.ok) {
-                        quote_json = await response.json();
-                        this.quote = quote_json.content;
-                        this.author = quote_json.author;
-                    } else {
-                        alert('Couldnt load a quote');
+                methods: {
+                    getQuote: async function() {
+                        this.loading = true;
+
+                        let q = await this._requestQuote();
+                        this.quote = q.quote;
+                        this.author = q.author;
+                        
+                        this.loading = false;
+                    },
+                    _requestQuote: async function() {
+                        let response = await fetch(quotes_url);
+                        if(response.ok) {
+                            quote_json = await response.json();
+                            return {
+                                quote: quote_json.content,
+                                author: quote_json.author
+                            }
+                        } else {
+                            return {
+                                error: response.statusText
+                            }
+                        }
                     }
                 }
             })
