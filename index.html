@@ -26,6 +26,7 @@
                         </td>
                     </tr>
                 </table>
+                <p>{{ encoded }}</p>
                 <p>{{ decoded_quote }}</p>
                 <p><i>{{ author }}</i></p>
             </div>
@@ -34,6 +35,7 @@
         <script type='text/javascript' src="scripts/vue.js"></script> 
         <script type='text/javascript'>
             let quotes_url = 'https://api.quotable.io/random';
+            let a = 'abcdefghijklmnopqrstuvwxyz';
             var app = new Vue({
                 el: '#app',
                 data: {
@@ -45,7 +47,6 @@
                     completed: false // Set to true with the user submits the decoded quote sucessfully
                 },
                 mounted: function() {
-                    let a = 'abcdefghijklmnopqrstuvwxyz';
                     let tmp = {}
                     
                     for (let i = 0; i < a.length; i++) {
@@ -65,6 +66,8 @@
                         for (let i in this.alphabet) {
                             this.alphabet[i] = '';
                         }
+
+                        this.encoded = this._encode_quote(this.decoded_quote);
                         
                         this.loading = false;
                     },
@@ -81,6 +84,40 @@
                                 error: response.statusText
                             }
                         }
+                    },
+                    _encode_quote: function(quote) {
+                        let available_chars = a;
+                        let cipher = '';
+
+                        for (let i = 0; i < a.length; i++) {
+                            let key = a[i];
+                            let char_index = Math.random() * available_chars.length;
+                            let value = available_chars.charAt(char_index);
+
+                            cipher += value;
+                            available_chars.replace(value, '');
+                        }
+                        
+                        let tmp = '';
+                        for (let i = 0; i < this.decoded_quote.length; i++) {
+                            let old_char = this.decoded_quote.charAt(i);
+                            let old_index = a.indexOf(old_char.toLowerCase());
+
+                            if (old_index < 0) {
+                                tmp += old_char;
+                                continue;
+                            }
+
+                            let new_char = cipher.charAt(old_index);
+                            if (old_char == old_char.toUpperCase()) {
+                                // New char should be uppercase
+                                tmp += new_char.toUpperCase();
+                            } else {
+                                tmp += new_char;
+                            }
+                        }
+
+                        return tmp;
                     }
                 }
             })
