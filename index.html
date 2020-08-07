@@ -1,18 +1,26 @@
 <html>
     <head>
         <title>Quote Breaker</title>
+        <meta charset="UTF-8">
         <style type='text/css'>
             [v-cloak] { display:none; }
+            body {
+                font-family: "Courier New", Courier, monospace;
+            }
+            .wide-text {
+                font-size: 1.2em;
+            }
         </style>
     <body>
         <div id='app' v-cloak>
             <button v-on:click='getQuote'>Get a new quote</button>
+            <button v-on:click='checkSolution' v-if='quote.length > 0'>Check solution</button>
 
             <div v-if='loading'>
                 <p>Loading a new quote...</p>
             </div>
             
-            <div v-else-if='decoded_quote'>
+            <div v-else-if='quote'>
                 <h3>Decode the quote!</h3>
                 <table>
                     <tr>
@@ -22,70 +30,36 @@
                     </tr>
                     <tr>
                         <td align='center' v-for='(replacement, original, index) in alphabet'>
-                            <input type='text' maxlength="1" v-bind:value='replacement' style='width:35px; text-align:center' />
+                            <input type='text' maxlength="1" v-model='alphabet[original]' style='width:35px; text-align:center' />
                         </td>
                     </tr>
                 </table>
-                <p>{{ encoded }}</p>
-                <p>{{ decoded_quote }}</p>
+                <div class='wide-text'>
+                    <p v-html='overlay'></p>
+                    <p>{{ encoded }}</p>
+                    <p>{{ quote }}</p>
+                </div>
                 <p><i>{{ author }}</i></p>
             </div>
         </div>
 
-        <script type='text/javascript' src="scripts/vue.js"></script> 
+        <script type='text/javascript' src="scripts/vue.min.js"></script> 
         <script type='text/javascript'>
             let quotes_url = 'https://api.quotable.io/random';
             let a = 'abcdefghijklmnopqrstuvwxyz';
+
             var app = new Vue({
                 el: '#app',
                 data: {
+                    // Alphabet is going to need to be used in a child component
                     alphabet: {},
                     loading: undefined,
-                    decoded_quote: '',
-                    encoded: '',
+                    quote: '',
                     author: '',
                     completed: false // Set to true with the user submits the decoded quote sucessfully
                 },
-                mounted: function() {
-                    let tmp = {}
-                    
-                    for (let i = 0; i < a.length; i++) {
-                        tmp[a[i]] = '';
-                    }
-
-                    this.alphabet = tmp;
-                },
-                methods: {
-                    getQuote: async function() {
-                        this.loading = true;
-
-                        let q = await this._requestQuote();
-                        this.decoded_quote = q.quote;
-                        this.author = q.author;
-
-                        for (let i in this.alphabet) {
-                            this.alphabet[i] = '';
-                        }
-
-                        this.encoded = this._encode_quote(this.decoded_quote);
-                        
-                        this.loading = false;
-                    },
-                    _requestQuote: async function() {
-                        let response = await fetch(quotes_url);
-                        if(response.ok) {
-                            quote_json = await response.json();
-                            return {
-                                quote: quote_json.content,
-                                author: quote_json.author
-                            }
-                        } else {
-                            return {
-                                error: response.statusText
-                            }
-                        }
-                    },
-                    _encode_quote: function(quote) {
+                computed: {
+                    encoded: function() {
                         let available_chars = a;
                         let cipher = '';
 
@@ -95,12 +69,12 @@
                             let value = available_chars.charAt(char_index);
 
                             cipher += value;
-                            available_chars.replace(value, '');
+                            available_chars = available_chars.replace(value, '');
                         }
                         
                         let tmp = '';
-                        for (let i = 0; i < this.decoded_quote.length; i++) {
-                            let old_char = this.decoded_quote.charAt(i);
+                        for (let i = 0; i < this.quote.length; i++) {
+                            let old_char = this.quote.charAt(i);
                             let old_index = a.indexOf(old_char.toLowerCase());
 
                             if (old_index < 0) {
@@ -118,6 +92,69 @@
                         }
 
                         return tmp;
+                    },
+                    overlay: function() {
+                        let tmp = '';
+                        for (let i = 0; i < this.encoded.length; i++) {
+                            let old_char = this.encoded[i];
+                            try {
+                                let new_char = this.alphabet[old_char.toLowerCase()];
+                                if (new_char == '') {
+                                    throw IndexError;
+                                }
+
+                                if (old_char == old_char.toUpperCase()) {
+                                    tmp += new_char.toUpperCase();
+                                } else {
+                                    tmp += new_char;
+                                }
+                            }
+                            catch(err) {
+                                tmp += '&nbsp;';
+                            }
+                        }
+                        return tmp;
+                    }
+                },
+                mounted: function() {
+                    let tmp = {}
+                    
+                    for (let i = 0; i < a.length; i++) {
+                        tmp[a[i]] = '';
+                    }
+
+                    this.alphabet = tmp;
+                },
+                methods: {
+                    getQuote: async function() {
+                        this.loading = true;
+
+                        let q = await this._requestQuote();
+                        this.quote = q.quote;
+                        this.author = q.author;
+
+                        for (let i in this.alphabet) {
+                            this.alphabet[i] = '';
+                        }
+                        
+                        this.loading = false;
+                    },
+                    checkSolution: function() {
+                        alert('check the solution');
+                    },
+                    _requestQuote: async function() {
+                        let response = await fetch(quotes_url);
+                        if(response.ok) {
+                            quote_json = await response.json();
+                            return {
+                                quote: quote_json.content,
+                                author: quote_json.author
+                            }
+                        } else {
+                            return {
+                                error: response.statusText
+                            }
+                        }
                     }
                 }
             })
