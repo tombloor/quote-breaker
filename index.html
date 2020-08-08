@@ -99,8 +99,9 @@
                             let old_char = this.encoded[i];
                             try {
                                 let new_char = this.alphabet[old_char.toLowerCase()];
-                                if (new_char == '') {
-                                    throw IndexError;
+                                if (new_char == '' || new_char == ' ') {
+                                    tmp += '&nbsp;';
+                                    continue;
                                 }
 
                                 if (old_char == old_char.toUpperCase()) {
@@ -110,7 +111,7 @@
                                 }
                             }
                             catch(err) {
-                                tmp += '&nbsp;';
+                                tmp += old_char;
                             }
                         }
                         return tmp;
@@ -140,7 +141,12 @@
                         this.loading = false;
                     },
                     checkSolution: function() {
-                        alert('check the solution');
+                        if (this.overlay == this.quote) {
+                            alert('You got it!');
+                            this.completed = true;
+                        } else {
+                            alert('Not quite...');
+                        }
                     },
                     _requestQuote: async function() {
                         let response = await fetch(quotes_url);
