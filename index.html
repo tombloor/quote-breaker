@@ -5,43 +5,87 @@
         <style type='text/css'>
             [v-cloak] { display:none; }
             body {
-                font-family: "Courier New", Courier, monospace;
+                padding: 0;
+                margin: 0;
             }
-            .wide-text {
-                font-size: 1.2em;
+            #app {
+                text-align: center;
+                font-family: "Courier New", Courier, monospace;
+                margin: 10px 20px;
+            }
+            .quote-text {
+                letter-spacing: 2px;
+            }
+            .main {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                margin-top: 4px;
+            }
+            .main table {
+                align-self: center;
+            }
+            input[type=text] {
+                width:35px; 
+                text-align:center
+            }
+            .alphabet-container {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: center;
+            }
+            .alphabet-item { 
+                margin: 2px 4px;
+            }
+            .version {
+                font-family: "Courier New", Courier, monospace;
+                width: 100%;
+                position: absolute;
+                bottom: 10px;
+                text-align: center;
             }
         </style>
     <body>
         <div id='app' v-cloak>
-            <button v-on:click='getQuote'>Get a new quote</button>
-            <button v-on:click='checkSolution' v-if='quote.length > 0'>Check solution</button>
+
+            <h1>Quote Breaker!</h1>
+
+            <p>
+                Welcome to Quote Breaker! 
+            </p>
+            <p>
+                Substitute letters to decode the quote. Once you think you've got it press the 'Check Solution' button
+                to see if you got it right.
+            </p>
+
+            <div class='button-container'>
+                <button v-on:click='getQuote'>Try a new quote</button>
+                <button v-on:click='checkSolution' v-if='quote.length > 0'>Check solution</button>
+            </div>
 
             <div v-if='loading'>
                 <p>Loading a new quote...</p>
             </div>
             
-            <div v-else-if='quote'>
+            <div class='main' v-else-if='quote'>
                 <h3>Decode the quote!</h3>
-                <table>
-                    <tr>
-                        <td align='center' v-for='(replacement, original, index) in alphabet'>
-                            {{original}}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align='center' v-for='(replacement, original, index) in alphabet'>
-                            <input type='text' maxlength="1" v-model='alphabet[original]' style='width:35px; text-align:center' />
-                        </td>
-                    </tr>
-                </table>
-                <div class='wide-text'>
-                    <p v-html='overlay'></p>
+                <div class='alphabet-container'>
+                    <div class='alphabet-item' v-for='(replacement, original, index) in alphabet'>
+                        <span>{{ original }}</span>
+                        <br/>
+                        <input type='text' maxlength='1' v-model='alphabet[original]' />
+                    </div>
+                </div>
+                <div class='quote-text'>
+                    <p>{{ overlay }}</p>
                     <p>{{ encoded }}</p>
-                    <p>{{ quote }}</p>
                 </div>
                 <p><i>{{ author }}</i></p>
+                <p><small><i>Powered by <a href='https://github.com/lukePeavey/quotable'>Quotable</a></i></small></p>
             </div>
         </div>
+        <p class='version'><small><a href='changelog.txt' target='_blank'>Version 1.0.0</a></small></p>
 
         <script type='text/javascript' src="scripts/vue.min.js"></script> 
         <script type='text/javascript'>
@@ -51,7 +95,6 @@
             var app = new Vue({
                 el: '#app',
                 data: {
-                    // Alphabet is going to need to be used in a child component
                     alphabet: {},
                     loading: undefined,
                     quote: '',
@@ -100,7 +143,7 @@
                             try {
                                 let new_char = this.alphabet[old_char.toLowerCase()];
                                 if (new_char == '' || new_char == ' ') {
-                                    tmp += '&nbsp;';
+                                    tmp += '_';
                                     continue;
                                 }
 
